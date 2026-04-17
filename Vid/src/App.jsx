@@ -20,8 +20,10 @@ const extractVideoId = (url) => {
   return null;
 };
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+
 const fetchTranscript = async (videoId) => {
-  const res = await fetch(`http://localhost:5000/transcript?id=${videoId}`);
+  const res = await fetch(`${BACKEND_URL}/transcript?id=${videoId}`);
   const data = await res.json();
   if (data.error) throw new Error(data.error);
   return { text: data.transcript, timestamped: data.timestamped };
@@ -37,7 +39,7 @@ const fetchVideoTitle = async (videoId) => {
 
 // ── STREAMING processAll: calls onResult(key, rawText) as each task finishes ─
 const processAllStream = async (transcript, prompts, onResult) => {
-  const res = await fetch("http://localhost:5000/process-all", {
+  const res = await fetch(`${BACKEND_URL}/process-all`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ transcript, prompts }),
