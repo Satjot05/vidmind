@@ -11,8 +11,33 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 app = Flask(__name__)
 CORS(app, origins="*")
 
-# ── API KEYS (add more keys to reduce rate limiting) ─────────────────────────
+# ── API KEYS (loaded from environment variables) ──────────────────────────────
+# Set GROQ_KEYS as a comma-separated string in your environment, e.g.:
+#   GROQ_KEYS=gsk_key1,gsk_key2,gsk_key3
+# Or set individual keys: GROQ_KEY_1, GROQ_KEY_2, etc.
 
+def _load_groq_keys():
+    # Try comma-separated GROQ_KEYS first
+    raw = os.environ.get("GROQ_KEYS", "")
+    keys = [k.strip() for k in raw.split(",") if k.strip()]
+    if keys:
+        return keys
+    # Fall back to individually numbered keys
+    numbered = []
+    for i in range(1, 20):
+        k = os.environ.get(f"GROQ_KEY_{i}", "").strip()
+        if k:
+            numbered.append(k)
+        elif i > 1:
+            break
+    if numbered:
+        return numbered
+    raise RuntimeError(
+        "No Groq API keys found! Set GROQ_KEYS env var (comma-separated) "
+        "or GROQ_KEY_1, GROQ_KEY_2, etc."
+    )
+
+GROQ_KEYS = _load_groq_keys()
 _key_cycle = itertools.cycle(GROQ_KEYS)
 
 def get_key():
