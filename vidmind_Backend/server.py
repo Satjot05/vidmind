@@ -46,18 +46,31 @@ def get_key():
 GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 COOKIE_PATH  = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cookies.txt")
 
+# ── PROXY CONFIG (helps bypass YouTube IP blocks on cloud servers) ────────────
+# Set PROXY_URL env var on Render, e.g.: http://user:pass@host:port
+# Leave empty to try without proxy first, then fail gracefully
+PROXY_URL = os.environ.get("PROXY_URL", "").strip()
+
 # ── TRANSCRIPT ────────────────────────────────────────────────────────────────
 
-def make_ytt():
-    from youtube_transcript_api import YouTubeTranscriptApi
+def make_session(use_proxy=False):
+    """Create a requests session, optionally with proxy."""
     session = requests.Session()
     session.headers.update({
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
     })
     if os.path.exists(COOKIE_PATH):
         jar = http.cookiejar.MozillaCookieJar(COOKIE_PATH)
         jar.load(ignore_discard=True, ignore_expires=True)
         session.cookies = jar
+    if use_proxy and PROXY_URL:
+        session.proxies = {"http": PROXY_URL, "https": PROXY_URL}
+        print(f"[TRANSCRIPT] Using proxy")
+    return session
+
+def make_ytt(use_proxy=False):
+    from youtube_transcript_api import YouTubeTranscriptApi
+    session = make_session(use_proxy=use_proxy)
     try:
         return YouTubeTranscriptApi(http_client=session)
     except TypeError:
@@ -71,11 +84,13 @@ def build_timestamped(segments):
         parts.append(f"[{mins}:{secs:02d}] {s.text}")
     return " ".join(parts)
 
-def fetch_best_transcript(video_id):
-    ytt = make_ytt()
+def _try_fetch(video_id, use_proxy=False):
+    """Single attempt to fetch transcript, returns (text, timestamped, lang) or raises."""
+    ytt = make_ytt(use_proxy=use_proxy)
+    # Strategy 1: list all transcripts and pick best
     try:
         tlist = list(ytt.list(video_id))
-        print(f"[TRANSCRIPT] Found {len(tlist)} transcript(s)")
+        print(f"[TRANSCRIPT] Found {len(tlist)} transcript(s) (proxy={use_proxy})")
         manual_en, auto_en, manual_any, auto_any = None, None, None, None
         for t in tlist:
             lang = t.language_code.lower()
@@ -95,52 +110,66 @@ def fetch_best_transcript(video_id):
             timestamped = build_timestamped(fetched)
             return text, timestamped, chosen.language_code
     except Exception as e:
-        print(f"[TRANSCRIPT] Strategy 1 failed: {e}")
+        print(f"[TRANSCRIPT] Strategy 1 failed (proxy={use_proxy}): {e}")
+        raise
 
-    for lang in [["en"], ["en-US"], ["en-GB"], None]:
-        try:
-            fetched = ytt.fetch(video_id, languages=lang) if lang else ytt.fetch(video_id)
-            text = " ".join([s.text for s in fetched])
-            timestamped = build_timestamped(fetched)
-            return text, timestamped, str(lang)
-        except Exception as e:
-            print(f"[TRANSCRIPT] Strategy 2 lang={lang} failed: {e}")
+def fetch_best_transcript(video_id):
+    last_error = None
 
+    # Try without proxy first
     try:
+        return _try_fetch(video_id, use_proxy=False)
+    except Exception as e:
+        last_error = e
+        print(f"[TRANSCRIPT] No-proxy attempt failed: {e}")
+
+    # Try with proxy if configured
+    if PROXY_URL:
+        try:
+            return _try_fetch(video_id, use_proxy=True)
+        except Exception as e:
+            last_error = e
+            print(f"[TRANSCRIPT] Proxy attempt failed: {e}")
+
+    # Strategy 3: direct YouTube page scrape (works sometimes even without auth)
+    try:
+        session = make_session(use_proxy=bool(PROXY_URL))
         url = f"https://www.youtube.com/watch?v={video_id}"
-        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-        page = requests.get(url, headers=headers, timeout=10)
+        page = session.get(url, timeout=15)
         matches = re.findall(r'"baseUrl":"(https://www\.youtube\.com/api/timedtext[^"]+)"', page.text)
         if matches:
             caption_url = matches[0].replace("\\u0026", "&")
-            caption_res = requests.get(caption_url, headers=headers, timeout=10)
+            caption_res = session.get(caption_url, timeout=10)
             texts = re.findall(r'<text start="([^"]+)"[^>]*>([^<]+)</text>', caption_res.text)
             if texts:
                 import html
-                plain_parts = []
-                ts_parts = []
+                plain_parts, ts_parts = [], []
                 for start_str, t in texts:
                     clean = html.unescape(t)
                     plain_parts.append(clean)
                     try:
                         start = float(start_str)
-                        mins = int(start // 60)
-                        secs = int(start % 60)
+                        mins, secs = int(start // 60), int(start % 60)
                         ts_parts.append(f"[{mins}:{secs:02d}] {clean}")
                     except:
                         ts_parts.append(clean)
-                text = " ".join(plain_parts)
-                timestamped = " ".join(ts_parts)
-                return text, timestamped, "en"
+                print("[TRANSCRIPT] Strategy 3 (page scrape) succeeded")
+                return " ".join(plain_parts), " ".join(ts_parts), "en"
     except Exception as e:
-        print(f"[TRANSCRIPT] Strategy 3 failed: {e}")
+        print(f"[TRANSCRIPT] Strategy 3 (page scrape) failed: {e}")
 
-    raise Exception(
-        "No transcript available for this video. This can happen with: "
-        "(1) Shorts with no captions, "
-        "(2) Live streams that haven't been processed yet, "
-        "(3) Videos with captions disabled by the creator."
-    )
+    # Determine if it's a block or no captions
+    err_str = str(last_error).lower()
+    if "no transcript" in err_str or "transcriptsdisabled" in err_str or "notranscript" in err_str:
+        raise Exception(
+            "No captions available for this video. "
+            "Try a video with auto-generated or manual captions enabled."
+        )
+    else:
+        raise Exception(
+            f"Could not fetch transcript — YouTube may be blocking server requests. "
+            f"Try a different video or contact support. (Detail: {last_error})"
+        )
 
 @app.route("/transcript", methods=["GET"])
 def get_transcript():
