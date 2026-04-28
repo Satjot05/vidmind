@@ -95,10 +95,9 @@ This project is split into two repositories:
 
 | Repo | Description | Link |
 |---|---|---|
-| **Frontend** | React app (this repo) | Current repository |
-| **Backend** | Python Flask server | [github.com/Satjot05/vidmind-Backend](https://github.com/Satjot05/vidmind-Backend) |
+| **Frontend + Backend**  | React app + Python server |
 
-> ⚠️ **Both repos must be running simultaneously** for the application to work. The frontend runs on port `5173` and the backend on port `5000`.
+> ⚠️ **Both files must be running simultaneously** for the application to work. The frontend runs on port `5173` and the backend on port `5000`.
 
 ---
 
