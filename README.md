@@ -112,13 +112,13 @@ Make sure you have the following installed:
 
 ---
 
-## ⚛️ Frontend Setup (React)
+## ⚛️ Frontend + Backend Setup (React & Python)
 
-### 1. Clone the frontend repo
+### 1. Clone the repo
 
 ```bash
-git clone https://github.com/Satjot05/Ai-Video-Summarizer-Notes-and-Quiz-Generator.git
-cd Ai-Video-Summarizer-Notes-and-Quiz-Generator
+git clone https://github.com/Satjot05/Vidmind.git
+cd Vidmind
 ```
 
 ### 2. Install dependencies
@@ -141,20 +141,14 @@ The app will be available at `http://localhost:5173`
 
 ## 🐍 Backend Setup (Python Flask)
 
-### 1. Clone the backend repo
 
-```bash
-git clone https://github.com/Satjot05/vidmind-Backend.git
-cd vidmind-Backend
-```
-
-### 2. Install Python dependencies
+### 1. Install Python dependencies
 
 ```bash
 pip install flask flask-cors youtube-transcript-api requests python-dotenv
 ```
 
-### 3. Add your Groq API key
+### 2. Add your Groq API key
 
 Open `server.py` and replace the placeholder:
 
@@ -170,7 +164,7 @@ GROQ_API_KEY=your_groq_api_key_here
 
 > Get your free API key at [console.groq.com](https://console.groq.com) — no credit card needed.
 
-### 4. (Optional) Add YouTube cookies to bypass IP blocks
+### 3. (Optional) Add YouTube cookies to bypass IP blocks
 
 If you get a "YouTube is blocking requests" error, export your YouTube cookies:
 
@@ -209,7 +203,7 @@ python server.py
 
 **Terminal 2 — Frontend:**
 ```bash
-cd Ai-Video-Summarizer-Notes-and-Quiz-Generator
+cd Vidmind
 npm run dev
 ```
 
@@ -260,8 +254,6 @@ __pycache__/
 | Regular videos | ✅ Full support | Works with any video that has captions |
 | YouTube Shorts | ✅ Supported | Must have captions enabled |
 | Live stream recordings | ✅ Supported | Captions must be processed (2–4 hrs after stream ends) |
-| Active live streams | ❌ Not supported | Captions not available during live |
-| Videos with no captions | ❌ Not supported | Creator must enable captions |
 
 ---
 
