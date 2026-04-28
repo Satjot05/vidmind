@@ -93,8 +93,8 @@ The React frontend never calls external APIs directly — all requests go throug
 
 This project is split into two repositories:
 
-| Repo | Description | Link |
-|---|---|---|
+| Repo | Description |
+|---|---|
 | **Frontend + Backend**  | React app + Python server |
 
 > ⚠️ **Both files must be running simultaneously** for the application to work. The frontend runs on port `5173` and the backend on port `5000`.
