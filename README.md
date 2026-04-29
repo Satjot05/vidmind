@@ -3,6 +3,24 @@
 > Turn any YouTube video into a detailed summary, structured study notes, a 10-question quiz and mind map — instantly. Built with React + Python Flask + LLaMA 3.3 70B via Groq.
 
 
+## 📂 Project Structure
+
+```
+Frontend (React)
+├── src/
+│   ├── App.jsx          # Main application component
+│   └── main.jsx         # React entry point
+├── index.html
+├── vite.config.js
+└── package.json
+
+Backend (Python)
+├── server.py            # Flask API server
+├── cookies.txt          # YouTube cookies (not committed)
+├── .env                 # Environment variables (not committed)
+└── requirements.txt     # Python dependencies
+```
+
 
 ---
 
@@ -324,24 +342,6 @@ Health check endpoint.
 | `Quiz data unavailable` | AI returned malformed JSON | Re-analyze the video (parser has 4 fallbacks) |
 
 ---
-
-## 📂 Project Structure
-
-```
-Frontend (React)
-├── src/
-│   ├── App.jsx          # Main application component
-│   └── main.jsx         # React entry point
-├── index.html
-├── vite.config.js
-└── package.json
-
-Backend (Python)
-├── server.py            # Flask API server
-├── cookies.txt          # YouTube cookies (not committed)
-├── .env                 # Environment variables (not committed)
-└── requirements.txt     # Python dependencies
-```
 
 ---
 
