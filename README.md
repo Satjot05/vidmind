@@ -26,6 +26,7 @@ Backend (Python)
 
 ## 📌 Table of Contents
 
+- [Project Structure](#project-structure)
 - [About the Project](#about-the-project)
 - [Features](#features)
 - [Tech Stack](#tech-stack)
@@ -40,7 +41,6 @@ Backend (Python)
 - [Supported Video Types](#supported-video-types)
 - [API Endpoints](#api-endpoints)
 - [Troubleshooting](#troubleshooting)
-- [Project Structure](#project-structure)
 - [Acknowledgements](#acknowledgements)
 
 ---
