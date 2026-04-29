@@ -16,7 +16,7 @@ Frontend (React)
 
 Backend (Python)
 ├── server.py            # Flask API server
-├── cookies.txt          # YouTube cookies (not committed)
+├── cookies.txt          # YouTube cookies 
 ├── .env                 # Environment variables (not committed)
 └── requirements.txt     # Python dependencies
 ```
