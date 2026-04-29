@@ -1,4 +1,4 @@
-[# ⚡ VidMind — AI Video Summarizer, Notes Maker & Quiz Generator
+[## ⚡ VidMind — AI Video Summarizer, Notes Maker & Quiz Generator
 
 > Turn any YouTube video into a detailed summary, structured study notes, a 10-question quiz and mind map — instantly. Built with React + Python Flask + LLaMA 3.3 70B via Groq.
 
